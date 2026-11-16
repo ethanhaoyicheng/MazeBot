@@ -120,13 +120,54 @@ bool atMarker(Bot *bot){
     }   return false;
 }
 
-void drawMaze(void){
-
+void drawMaze(int maze[HEIGHT][WIDTH], Bot *bot){
+    setWindowSize(600,600);
+    setLineWidth(2);
+    setColour(black);
+    for (int y = 0; y < HEIGHT; y++){
+        for (int x = 0; x < WIDTH; x++){
+            if (maze[y][x] == IMPASSABLE){
+                fillRect(LEFT + x*CELL_SIZE, TOP + y*CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            } else if (maze[y][x] == END_MARKER){
+                setColour(blue);
+                fillRect(LEFT + x*CELL_SIZE, TOP + y*CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                setColour(black);
+            }
+        }
+    }
+    if (bot != NULL){
+        int bx = LEFT + bot->x*CELL_SIZE;
+        int by = TOP + bot->y*CELL_SIZE;
+        setColour(green);
+        fillOval(bx+5, by+5, CELL_SIZE-10, CELL_SIZE-10);
+        setColour(black);
+        int centerX = bx + CELL_SIZE/2;
+        int centerY = by + CELL_SIZE/2;
+        int lineLength = CELL_SIZE/2 - 5;
+        int endX = centerX;
+        int endY = centerY;
+        switch(bot->direction){
+            case EAST:
+                endX += lineLength;
+                break;
+            case SOUTH:
+                endY += lineLength;
+                break;
+            case WEST:
+                endX -= lineLength;
+                break;
+            case NORTH:
+                endY -= lineLength;
+                break;
+        }
+        drawLine(centerX, centerY, endX, endY);
+    }
 }
 
 int main(void){
     Bot bot = {0,4,EAST};
     outMaze(&bot);
+    drawMaze(maze, &bot);
     return 0;
 }
 
