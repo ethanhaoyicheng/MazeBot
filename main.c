@@ -129,7 +129,7 @@ void drawMaze(int maze[HEIGHT][WIDTH], Bot *bot){
             if (maze[y][x] == IMPASSABLE){
                 fillRect(LEFT + x*CELL_SIZE, TOP + y*CELL_SIZE, CELL_SIZE, CELL_SIZE);
             } else if (maze[y][x] == END_MARKER){
-                setColour(blue);
+                setColour(yellow);
                 fillRect(LEFT + x*CELL_SIZE, TOP + y*CELL_SIZE, CELL_SIZE, CELL_SIZE);
                 setColour(black);
             }
@@ -138,7 +138,7 @@ void drawMaze(int maze[HEIGHT][WIDTH], Bot *bot){
     if (bot != NULL){
         int bx = LEFT + bot->x*CELL_SIZE;
         int by = TOP + bot->y*CELL_SIZE;
-        setColour(green);
+        setColour(blue);
         fillOval(bx+5, by+5, CELL_SIZE-10, CELL_SIZE-10);
         setColour(black);
         int centerX = bx + CELL_SIZE/2;
@@ -163,12 +163,11 @@ void drawMaze(int maze[HEIGHT][WIDTH], Bot *bot){
         drawLine(centerX, centerY, endX, endY);
     }
 }
-
 int main(void){
     Bot bot = {0,4,EAST};
     outMaze(&bot);
     drawMaze(maze, &bot);
-    return 0;
+    return 0; 
 }
 
 //compile:
