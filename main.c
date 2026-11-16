@@ -87,9 +87,9 @@ bool checkSpace(Bot *bot){
     }   return true;
 }
 
-void forward(Bot *bot){
+bool forward(Bot *bot){
     if (bot == NULL)
-    return;
+    return false;
     
     int *axis;
     int bd = bot->direction;
@@ -102,13 +102,15 @@ void forward(Bot *bot){
         (*axis)++;
         if (!checkSpace(bot)){
             (*axis)--;
+            return false;
         }
     }   else{
         (*axis)--;
         if (!checkSpace(bot)){
             (*axis)++;
+            return false;
         }
-    }
+    } return true;
 }
 
 bool atMarker(Bot *bot){
@@ -163,10 +165,32 @@ void drawMaze(int maze[HEIGHT][WIDTH], Bot *bot){
         drawLine(centerX, centerY, endX, endY);
     }
 }
+
 int main(void){
     Bot bot = {0,4,EAST};
     outMaze(&bot);
     drawMaze(maze, &bot);
+
+    while (!atMarker(&bot)){
+        sleep(300);
+        right(&bot);
+        if (!forward(&bot)){
+            left(&bot);
+            if (!forward(&bot)){
+                right(&bot);
+                if (!forward(&bot)){
+                    left(&bot);
+                    left(&bot);
+                    if (!forward(&bot)){
+                        left(&bot);
+                    }
+                }
+            }
+        }  
+        outMaze(&bot);
+        drawMaze(maze, &bot);
+    }
+
     return 0; 
 }
 
