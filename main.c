@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "graphics.h"
 
 //maze constants
@@ -10,21 +11,27 @@
 #define IMPASSABLE 1
 #define END_MARKER 9
 
-#define HEIGHT 9
-#define WIDTH 8
+#define HEIGHT 20
+#define WIDTH 20
 
 //bot constants
+#define START_X 0
+#define START_Y 4
+
 #define EAST  0
 #define SOUTH 1
 #define WEST  2
 #define NORTH 3
 
 //drawing constants
-#define CELL_SIZE 45
-#define LEFT 60
-#define TOP 60
+#define WINDOW_WIDTH 780
+#define WINDOW_HEIGHT 800
 
-int maze[HEIGHT][WIDTH] = {
+#define CELL_SIZE 35
+#define LEFT 40
+#define TOP 40
+
+/*int maze[HEIGHT][WIDTH] = {
     {1,1,1,1,1,1,1,1},
     {1,0,0,0,1,0,0,9},
     {1,0,1,0,1,1,0,1},
@@ -34,7 +41,10 @@ int maze[HEIGHT][WIDTH] = {
     {1,0,1,1,0,0,0,1},
     {1,0,0,0,0,1,0,1},
     {1,1,1,1,1,1,1,1},
-};
+    
+};*/
+
+int maze[HEIGHT][WIDTH];
 
 typedef struct {
     int x;
@@ -123,7 +133,7 @@ bool atMarker(Bot *bot){
 }
 
 void drawMaze(int maze[HEIGHT][WIDTH], Bot *bot){
-    setWindowSize(600,600);
+    setWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
     setLineWidth(2);
     setColour(black);
     for (int y = 0; y < HEIGHT; y++){
@@ -166,29 +176,94 @@ void drawMaze(int maze[HEIGHT][WIDTH], Bot *bot){
     }
 }
 
-int main(void){
-    Bot bot = {0,4,EAST};
-    outMaze(&bot);
-    drawMaze(maze, &bot);
+void discoverBlock(int maze[HEIGHT][WIDTH]){
+    for (int y = 0; y < HEIGHT; y++){
+        for (int x = 0; x < WIDTH; x++){
+            maze[y][x] = IMPASSABLE;
+        }
+    }
+    maze[1][WIDTH-2] = END_MARKER;
+} 
 
-    while (!atMarker(&bot)){
-        sleep(300);
-        right(&bot);
-        if (!forward(&bot)){
-            left(&bot);
-            if (!forward(&bot)){
-                right(&bot);
-                if (!forward(&bot)){
-                    left(&bot);
-                    left(&bot);
-                    if (!forward(&bot)){
-                        left(&bot);
-                    }
-                }
+/*void ellerGenerateMaze(int maze[HEIGHT][WIDTH]){
+
+}*/
+
+void dfsGenerateMaze(int maze[HEIGHT][WIDTH]){
+    //initialize solid impassable maze block 
+    discoverBlock(maze);
+    //implement dfs algorithm to generate semi-random maze
+    int stack[HEIGHT*WIDTH];
+    int top = 0;
+    int visited[HEIGHT][WIDTH] = {0};
+    stack[top++] = START_Y * WIDTH + START_X;
+    visited[START_Y][START_X] = 1;
+    
+    while (top >= 0){
+        int current = stack[--top];
+        int x = current % WIDTH;
+        int y = current / WIDTH;
+        maze[y][x] = PASSABLE;
+        
+        //shuffle directions
+        int directions[4] = {0, 1, 2, 3};
+        for (int i = 0; i < 4; i++){
+            int j = rand() % 4;
+            int temp = directions[i];
+            directions[i] = directions[j];
+            directions[j] = temp;
+        }
+        
+        for (int i = 0; i < 4; i++){
+            int nx = x;
+            int ny = y;
+            switch(directions[i]){
+                case 0: nx += 2; break; // right
+                case 1: ny += 2; break; // down
+                case 2: nx -= 2; break; // left
+                case 3: ny -= 2; break; // up
             }
-        }  
+            if (nx > 0 && nx < WIDTH-1 && ny > 0 && ny < HEIGHT-1 && !visited[ny][nx]){
+                visited[ny][nx] = 1;
+                maze[(y+ny)/2][(x+nx)/2] = PASSABLE; // remove wall between cells
+                stack[top++] = ny * WIDTH + nx;
+            }
+        }
+    }
+}
+
+
+int main(void){
+    while (1){
+        //rest after and before each maze
+        sleep(1000);
+        dfsGenerateMaze(maze);
+
+        Bot bot = {0,4,EAST};
         outMaze(&bot);
         drawMaze(maze, &bot);
+        sleep(1000);
+
+        //short interval between each robot step; wall hugging is implemented by first attempting to move right, then forward, then left, then back
+        while (!atMarker(&bot)){
+            sleep(80);
+            right(&bot);
+            if (!forward(&bot)){
+                left(&bot);
+                if (!forward(&bot)){
+                    right(&bot);
+                    if (!forward(&bot)){
+                        left(&bot);
+                        left(&bot);
+                        if (!forward(&bot)){
+                            left(&bot);
+                        }
+                    }
+                }
+            }  
+            outMaze(&bot);
+            drawMaze(maze, &bot);
+        }
     }
 
     return 0; 
