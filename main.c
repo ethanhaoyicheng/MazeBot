@@ -23,13 +23,16 @@
 #define WEST  2
 #define NORTH 3
 
-//drawing constants
+//UI constants
 #define WINDOW_WIDTH 780
 #define WINDOW_HEIGHT 800
 
 #define CELL_SIZE 35
 #define LEFT 40
 #define TOP 40
+
+#define LONG_SLEEP 1000
+#define SHORT_SLEEP 80
 
 /*int maze[HEIGHT][WIDTH] = {
     {1,1,1,1,1,1,1,1},
@@ -76,20 +79,25 @@ void outMaze(Bot *bot)
 
 
 void left(Bot *bot)
+//turn bot left
 {
     if (bot == NULL)
     return;
     bot->direction = (bot->direction + 3) % 4;
 }
 
-void right(Bot *bot){
+void right(Bot *bot)
+//turn bot right
+{
     if (bot == NULL)
     return;
     bot->direction = (bot->direction+1)%4;
 }
 
-bool checkSpace(Bot *bot){
+bool checkSpace(Bot *bot)
+//checks if space corresponding to bot position is within grid bounds and passable
 //implemented instead of canMoveForward(); the latter could be implemented simply by including the axis increment temporarily
+{
     if (bot == NULL)
         return false; 
     if (bot->x < 0 || bot->x >= WIDTH || bot->y < 0 || bot->y >= HEIGHT || maze[bot->y][bot->x] == IMPASSABLE){
@@ -123,7 +131,9 @@ bool forward(Bot *bot){
     } return true;
 }
 
-bool atMarker(Bot *bot){
+bool atMarker(Bot *bot)
+// checks if bot is at end marker
+{
     if (bot == NULL)
     return false;
     
@@ -152,9 +162,13 @@ void drawMaze(int maze[HEIGHT][WIDTH], Bot *bot){
         int by = TOP + bot->y*CELL_SIZE;
         setColour(blue);
         fillOval(bx+5, by+5, CELL_SIZE-10, CELL_SIZE-10);
+
         setColour(black);
         int centerX = bx + CELL_SIZE/2;
         int centerY = by + CELL_SIZE/2;
+        fillRect(centerX, centerY, 1,1);
+
+        setColour(yellow);
         int lineLength = CELL_SIZE/2 - 5;
         int endX = centerX;
         int endY = centerY;
@@ -171,7 +185,7 @@ void drawMaze(int maze[HEIGHT][WIDTH], Bot *bot){
             case NORTH:
                 endY -= lineLength;
                 break;
-        }
+        
         drawLine(centerX, centerY, endX, endY);
     }
 }
@@ -192,7 +206,7 @@ void discoverBlock(int maze[HEIGHT][WIDTH]){
 void dfsGenerateMaze(int maze[HEIGHT][WIDTH]){
     //initialize solid impassable maze block 
     discoverBlock(maze);
-    //implement dfs algorithm to generate semi-random maze
+    //dfs maze generation algorithm
     int stack[HEIGHT*WIDTH];
     int top = 0;
     int visited[HEIGHT][WIDTH] = {0};
@@ -205,7 +219,7 @@ void dfsGenerateMaze(int maze[HEIGHT][WIDTH]){
         int y = current / WIDTH;
         maze[y][x] = PASSABLE;
         
-        //shuffle directions
+        // pick random direction for next visited space
         int directions[4] = {0, 1, 2, 3};
         for (int i = 0; i < 4; i++){
             int j = rand() % 4;
@@ -218,13 +232,13 @@ void dfsGenerateMaze(int maze[HEIGHT][WIDTH]){
             int nx = x;
             int ny = y;
             switch(directions[i]){
-                case 0: nx += 2; break; // right
-                case 1: ny += 2; break; // down
-                case 2: nx -= 2; break; // left
-                case 3: ny -= 2; break; // up
+                case EAST: nx += 2; break;
+                case SOUTH: ny += 2; break; 
+                case WEST: nx -= 2; break; 
+                case NORTH: ny -= 2; break; 
             }
             if (nx > 0 && nx < WIDTH-1 && ny > 0 && ny < HEIGHT-1 && !visited[ny][nx]){
-                visited[ny][nx] = 1;
+                visited[ny][nx] = 1; // prevents space from being carved to in future (no loops in maze)
                 maze[(y+ny)/2][(x+nx)/2] = PASSABLE; // remove wall between cells
                 stack[top++] = ny * WIDTH + nx;
             }
@@ -235,18 +249,18 @@ void dfsGenerateMaze(int maze[HEIGHT][WIDTH]){
 
 int main(void){
     while (1){
-        //rest after and before each maze
-        sleep(1000);
+        //rest after and before each maze run
+        sleep(LONG_SLEEP);
         dfsGenerateMaze(maze);
 
         Bot bot = {0,4,EAST};
         outMaze(&bot);
         drawMaze(maze, &bot);
-        sleep(1000);
+        sleep(LONG_SLEEP);
 
         //short interval between each robot step; wall hugging is implemented by first attempting to move right, then forward, then left, then back
         while (!atMarker(&bot)){
-            sleep(80);
+            sleep(SHORT_SLEEP);
             right(&bot);
             if (!forward(&bot)){
                 left(&bot);
