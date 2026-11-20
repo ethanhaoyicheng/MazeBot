@@ -209,18 +209,19 @@ void dfsGenerateMaze(int maze[HEIGHT][WIDTH]){
     //dfs maze generation algorithm
     int stack[HEIGHT*WIDTH];
     int top = 0;
-    int visited[HEIGHT][WIDTH] = {0};
+    int checklist[HEIGHT][WIDTH] = {0};
     stack[top++] = START_Y * WIDTH + START_X;
-    visited[START_Y][START_X] = 1;
+    checklist[START_Y][START_X] = 1;
     
+    //main loop
     while (top >= 0){
         int current = stack[--top];
         int x = current % WIDTH;
         int y = current / WIDTH;
         maze[y][x] = PASSABLE;
         
-        // pick random direction for next visited space
-        int directions[4] = {0, 1, 2, 3};
+        // pick random direction for next checklist space
+        int directions[4] = {EAST, SOUTH, WEST, NORTH};
         for (int i = 0; i < 4; i++){
             int j = rand() % 4;
             int temp = directions[i];
@@ -237,8 +238,8 @@ void dfsGenerateMaze(int maze[HEIGHT][WIDTH]){
                 case WEST: nx -= 2; break; 
                 case NORTH: ny -= 2; break; 
             }
-            if (nx > 0 && nx < WIDTH-1 && ny > 0 && ny < HEIGHT-1 && !visited[ny][nx]){
-                visited[ny][nx] = 1; // prevents space from being carved to in future (no loops in maze)
+            if (nx > 0 && nx < WIDTH-1 && ny > 0 && ny < HEIGHT-1 && !checklist[ny][nx]){
+                checklist[ny][nx] = 1; // prevents space from being carved to in future (no loops in maze)
                 maze[(y+ny)/2][(x+nx)/2] = PASSABLE; // remove wall between cells
                 stack[top++] = ny * WIDTH + nx;
             }
